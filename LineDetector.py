@@ -3,18 +3,18 @@ import numpy as np
 
 DEFAULT_CONF = {
     "epoch": 5000,
-    "thickness": 1,
+    "thickness": 2,  # Increased thickness for better visibility
     "lineColor": (0, 255, 0),
     "angularResolution": 1,
     "resolution": 1,
-    "threshold": 80,
-    "maxLength": 30,
-    "maxGap": 10,
-    "imgsize": (448, 448)
+    "threshold": 50,  # Lowered threshold for more sensitivity
+    "minLineLength": 20,  # Lowered for detecting shorter lines
+    "maxLineGap": 10,  # Reduced to detect more continuous lines
+    "imgsize": (640, 480)  # Adjusted for typical webcam resolution
 }
 
 class LineDetector:
-    def __init__(self, camIndex, config = DEFAULT_CONF):
+    def __init__(self, camIndex, config=DEFAULT_CONF):
         self.env = cv2.VideoCapture(camIndex, cv2.CAP_DSHOW)
         self.epoch = config["epoch"]
         self.thickness = config["thickness"]
@@ -22,8 +22,8 @@ class LineDetector:
         self.angularReso = (np.pi/180)*config["angularResolution"]
         self.reso = config["resolution"]
         self.threshold = config["threshold"]
-        self.maxLength = config["maxLength"]
-        self.maxGap = config["maxGap"]
+        self.minLineLength = config["minLineLength"]
+        self.maxLineGap = config["maxLineGap"]
         self.imgsize = config["imgsize"]
         print("video connected")
         
@@ -36,45 +36,28 @@ class LineDetector:
         if not ret:
             raise RuntimeError("Error: Can't read frame")
         
-        # frame = cv2.resize(frame, self.imgsize)
-
         return frame            
 
-    def _detect(self, img):
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        edges = cv2.Canny(img, 100, 200)
-        lines = cv2.HoughLines(edges, self.reso, self.angularReso, self.threshold)
-        return lines
-
-    def detect(self, img):
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-
-        edges = cv2.Canny(img, 100, 200)
-
+    def detect_white_lanes(self, img):
+        hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+        # Define range for white color in HSV
+        lower_white = np.array([0, 0, 190], dtype=np.uint8)
+        upper_white = np.array([180, 40, 255], dtype=np.uint8)
+        mask = cv2.inRange(hsv, lower_white, upper_white)
+        
+        roi = self.region_of_interest(mask)
+        
         lines = cv2.HoughLinesP(
-            edges,
+            roi,
             self.reso,
             self.angularReso,
             self.threshold,
-            self.maxLength,
-            self.maxGap
+            minLineLength=self.minLineLength,
+            maxLineGap=self.maxLineGap
         )
 
-        return lines
+        return lines, mask
     
-    def _plot(self, img, lines):
-        if lines is None:
-            return img
-        
-        for line in lines:
-            rho, deg = line[0]
-            cos, sin = np.cos(deg), np.sin(deg)
-            cx, cy = rho*cos, rho*sin
-            x1, y1 = int(cx - 1000*sin), int(cy + 1000*cos)
-            x2, y2 = int(cx + 1000*sin), int(cy - 1000*cos)
-            cv2.line(img, (x1, y1), (x2, y2), self.lineColor, self.thickness)        
-        return img
-
     def plot(self, img, lines):
         if lines is None:
             return img
@@ -85,14 +68,55 @@ class LineDetector:
         
         return img
 
+    def region_of_interest(self, img):
+        height, width = img.shape
+        mask = np.zeros_like(img)
+        # Define the region of interest based on the image provided
+        polygon = np.array([[
+            (0, height),
+            (width, height),
+            (width * 3//4, height * 2//3),
+            (width // 4, height * 2//3),
+        ]], np.int32)
+        cv2.fillPoly(mask, polygon, 255)
+        masked_image = cv2.bitwise_and(img, mask)
+        return masked_image
+
+    def filter_lines(self, lines, img):
+        left_lines = []
+        right_lines = []
+        if lines is None:
+            return []
+
+        for line in lines:
+            for x1, y1, x2, y2 in line:
+                if x1 == x2:  # Filter out vertical lines to avoid dividing by zero
+                    continue
+                slope = (y2 - y1) / (x2 - x1)
+                if abs(slope) < 0.5:  # Filter out near-horizontal lines
+                    continue
+                if slope < 0:
+                    left_lines.append(line)
+                else:
+                    right_lines.append(line)
+        return left_lines + right_lines
+
     def __call__(self):
-        for iter in range(self.epoch):
+        while True:
             img = self.getFrame()
-            lines = self._detect(img)
-            img = self._plot(img, lines)
+            lines, mask = self.detect_white_lanes(img)
+            lines = self.filter_lines(lines, img)
+            img = self.plot(img, lines)
             cv2.imshow('processed frame', img)
-            cv2.waitKey(0)
+            cv2.imshow('mask', mask)
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
 
     def __del__(self):
         self.env.release()
         cv2.destroyAllWindows()
+
+# Example usage
+if __name__ == "__main__":
+    line_detector = LineDetector(camIndex=0)
+    line_detector()
