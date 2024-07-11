@@ -1,8 +1,7 @@
-#include "Arduino.h"
 #include "Car_Library.h"
+#include <Arduino.h>
 
-float ultrasonic_distance(int trigPin, int echoPin)
-{
+float ultrasonic_distance(int trigPin, int echoPin) {
     long distance, duration;
 
     digitalWrite(trigPin, LOW);
@@ -18,8 +17,7 @@ float ultrasonic_distance(int trigPin, int echoPin)
     return distance;
 }
 
-int potentiometer_Read(int pin)
-{
+int potentiometer_Read(int pin) {
     int value;
 
     value = analogRead(pin) / 4;
@@ -27,20 +25,17 @@ int potentiometer_Read(int pin)
     return value;
 }
 
-void motor_forward(int IN1, int IN2, int speed)
-{
+void motor_forward(int IN1, int IN2, int speed) {
     analogWrite(IN1, speed);
     analogWrite(IN2, LOW);
 }
 
-void motor_backward(int IN1, int IN2, int speed)
-{
+void motor_backward(int IN1, int IN2, int speed) {
     analogWrite(IN1, LOW);
     analogWrite(IN2, speed);
 }
 
-void motor_hold(int IN1, int IN2)
-{
+void motor_hold(int IN1, int IN2) {
     analogWrite(IN1, LOW);
     analogWrite(IN2, LOW);
 }

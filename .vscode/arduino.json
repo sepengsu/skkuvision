@@ -1,0 +1,5 @@
+{
+    "sketch": "controller/Car/Car.ino",
+    "port": "COM14",
+    "board": "arduino:avr:mega"
+}
