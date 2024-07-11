@@ -1,5 +1,5 @@
 # from ArduinoController import ArduinoController
-from LineDetector import LineDetector
+from detector.LineDetector import LineDetector
 
 import cv2
 
