@@ -6,8 +6,8 @@ class SelfDrivingCar:
         self.pid_controller = PIDController(Kp, Ki, Kd)
         self.speed = speed  # 기본 속도 설정
 
-    def compute_steering_angle(self, central_line, img):
-        height, width, _ = img.shape
+    def compute_steering_angle(self, central_line, imgshape):
+        height, widh = imgshape
         central_x1, central_y1, central_x2, central_y2 = central_line
 
         # 중앙선의 각도 계산

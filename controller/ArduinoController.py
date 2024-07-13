@@ -1,6 +1,6 @@
 import time
 import serial
-from Function_Library import libARDUINO
+from .Function_Library import libARDUINO
 
 class ArduinoController(libARDUINO):
     def __init__(self, port, baud_rate):

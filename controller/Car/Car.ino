@@ -2,12 +2,12 @@
 #include "Car_Library.h"
 
 // 핀 정의
-const int leftMotorPin1 = 3; // 왼쪽 뒤바퀴 모터의 IN1 핀
-const int leftMotorPin2 = 4; // 왼쪽 뒤바퀴 모터의 IN2 핀
-const int rightMotorPin1 = 5; // 오른쪽 뒤바퀴 모터의 IN1 핀
-const int rightMotorPin2 = 6; // 오른쪽 뒤바퀴 모터의 IN2 핀
-const int handlePin1 = 7; // 핸들 모터의 IN1 핀
-const int handlePin2 = 8; // 핸들 모터의 IN2 핀
+const int leftMotorPin1 = 11; // 왼쪽 뒤바퀴 모터의 IN1 핀
+const int leftMotorPin2 = 12; // 왼쪽 뒤바퀴 모터의 IN2 핀
+const int rightMotorPin1 = 2; // 오른쪽 뒤바퀴 모터의 IN1 핀
+const int rightMotorPin2 = 3; // 오른쪽 뒤바퀴 모터의 IN2 핀
+const int handlePin1 = 6; // 핸들 모터의 IN1 핀
+const int handlePin2 = 7; // 핸들 모터의 IN2 핀
 
 void setup() {
   // 핀 모드 설정
